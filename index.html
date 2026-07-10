@@ -63,6 +63,30 @@
 (function () {
   // Bliźniacza strona na drugiej domenie dem (nowe dema: impulseo-pl.github.io).
   var OTHER = "https://impulseo-pl.github.io/zespol/";
+  // REJESTR KLIKNIĘĆ (10.07): przy "Gotowe!" zapisujemy 1 wiersz do demo_views (ta sama tabela
+  // i klucz publiczny co licznik dem; RLS pozwala TYLKO insert). Po co: żeby dało się sprawdzić,
+  // KTO z zespołu już kliknął (miasto + typ urządzenia z geo/UA). Bezpieczne dla alertów:
+  // follow_up_alert.py pomija wpisy bez karty klienta (demo_url .../zespol nie pasuje do żadnej),
+  // a znacznik referrer='team-marker' dodatkowo je odróżnia. Fire-and-forget, nie psuje strony.
+  var EP = "https://zngfubfinbojfgaxdrbf.supabase.co/rest/v1/demo_views";
+  var KEY = "sb_publishable_MWwoyGlSCWnJ4awtOPF0ow_ZVS0Y8qK";
+  function logClick() {
+    try {
+      if (sessionStorage.getItem("_tm")) return; sessionStorage.setItem("_tm", "1");
+      var ua = ""; try { ua = (navigator.userAgent || "").slice(0, 300); } catch (e) {}
+      function send(g) { try { fetch(EP, { method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", "apikey": KEY, "Authorization": "Bearer " + KEY, "Prefer": "return=minimal" },
+        body: JSON.stringify({ demo_url: location.origin + "/zespol", page: "/zespol/", referrer: "team-marker",
+          user_agent: ua || null, ip: (g && g.ip) || null, country: (g && g.cc) || null, city: (g && g.city) || null })
+      }).catch(function () {}); } catch (e) {} }
+      var done = false; function once(g) { if (done) return; done = true; send(g); }
+      var t = setTimeout(function () { once(null); }, 1500);
+      fetch("https://ipwho.is/?fields=ip,success,country_code,city", { cache: "no-store" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { clearTimeout(t); once(d && d.success !== false ? { ip: d.ip, cc: d.country_code, city: d.city } : null); })
+        .catch(function () { clearTimeout(t); once(null); });
+    } catch (e) {}
+  }
   var ok = false;
   try {
     localStorage.setItem("nb_team", "1");
@@ -76,10 +100,10 @@
   // Znacznik trzeba ustawić na OBU domenach dem (zapis jest osobny per domena),
   // więc bez parametru ?from=1 przeskakujemy na bliźniaczą stronę, która ustawia
   // swój znacznik i pokazuje potwierdzenie. Z ?from=1 jesteśmy drugim krokiem: koniec.
-  if (/[?&]from=1/.test(location.search)) { show("done"); return; }
+  if (/[?&]from=1/.test(location.search)) { show("done"); logClick(); return; }
   location.replace(OTHER + "?from=1");
   // Gdyby przeskok nie zadziałał, po 4 s i tak pokaż potwierdzenie (ten znacznik już jest).
-  setTimeout(function () { show("done"); }, 4000);
+  setTimeout(function () { show("done"); logClick(); }, 4000);
 })();
 </script>
 </body>
