@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tryb zespołu</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    background: #f4f5f7; color: #1a1c20; padding: 24px;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #14161a; color: #eceef1; }
+    .card { background: #1e2126 !important; box-shadow: 0 10px 30px rgba(0,0,0,.5) !important; }
+    .note { color: #9aa1ab !important; border-top-color: #2c3038 !important; }
+  }
+  .card {
+    background: #fff; border-radius: 20px; padding: 44px 32px;
+    max-width: 420px; width: 100%; text-align: center;
+    box-shadow: 0 10px 30px rgba(20,24,32,.10);
+  }
+  .icon { font-size: 64px; line-height: 1; margin-bottom: 20px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 12px; letter-spacing: -.02em; }
+  p  { font-size: 16px; line-height: 1.55; }
+  .note {
+    margin-top: 26px; padding-top: 18px; border-top: 1px solid #e7e9ee;
+    font-size: 13.5px; line-height: 1.5; color: #6b7280; text-align: left;
+  }
+  .spin {
+    width: 42px; height: 42px; margin: 0 auto 20px;
+    border: 4px solid rgba(128,128,128,.25); border-top-color: #3b82f6;
+    border-radius: 50%; animation: r .8s linear infinite;
+  }
+  @keyframes r { to { transform: rotate(360deg); } }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div id="working">
+      <div class="spin"></div>
+      <h1>Chwileczkę…</h1>
+      <p>Włączam tryb zespołu na tym urządzeniu.</p>
+    </div>
+    <div id="done" class="hidden">
+      <div class="icon">✅</div>
+      <h1>Gotowe!</h1>
+      <p>To urządzenie jest oznaczone jako <strong>zespołowe</strong>. Wasze wejścia na strony demo nie będą już liczone jako odwiedziny klientów.</p>
+      <p class="note">Jeśli oglądasz dema także w innej przeglądarce na tym samym urządzeniu (np. i w Safari, i w Chrome), otwórz ten link również tam. Po wyczyszczeniu danych przeglądarki kliknij link ponownie.</p>
+    </div>
+    <div id="fail" class="hidden">
+      <div class="icon">⚠️</div>
+      <h1>Nie udało się</h1>
+      <p>Ta przeglądarka blokuje zapis (np. tryb prywatny / incognito). Otwórz ten link w zwykłym oknie Safari lub Chrome.</p>
+    </div>
+  </div>
+<script>
+(function () {
+  // Bliźniacza strona na drugiej domenie dem (nowe dema: impulseo-pl.github.io).
+  var OTHER = "https://impulseo-pl.github.io/zespol/";
+  var ok = false;
+  try {
+    localStorage.setItem("nb_team", "1");
+    ok = localStorage.getItem("nb_team") === "1";
+  } catch (e) {}
+  var show = function (id) {
+    document.getElementById("working").className = "hidden";
+    document.getElementById(id).className = "";
+  };
+  if (!ok) { show("fail"); return; }
+  // Znacznik trzeba ustawić na OBU domenach dem (zapis jest osobny per domena),
+  // więc bez parametru ?from=1 przeskakujemy na bliźniaczą stronę, która ustawia
+  // swój znacznik i pokazuje potwierdzenie. Z ?from=1 jesteśmy drugim krokiem: koniec.
+  if (/[?&]from=1/.test(location.search)) { show("done"); return; }
+  location.replace(OTHER + "?from=1");
+  // Gdyby przeskok nie zadziałał, po 4 s i tak pokaż potwierdzenie (ten znacznik już jest).
+  setTimeout(function () { show("done"); }, 4000);
+})();
+</script>
+</body>
+</html>
